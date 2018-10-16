@@ -8,64 +8,6 @@ const REGIONS = ['prebid-eu', 'prebid-us', 'prebid-asia'];
 const ENDPOINT_URL = 'creativecdn.com/bidder/prebid/bids';
 const DEFAULT_CURRENCY_ARR = ['USD']; // NOTE - USD is the only supported currency right now; Hardcoded for bids
 
-/**
- * Helpers
- */
-
-function buildEndpointUrl(region) {
-  return 'https://' + region + '.' + ENDPOINT_URL;
-}
-
-/**
- * Produces an OpenRTBImpression from a slot config.
- */
-function mapImpression(slot) {
-  return {
-    id: slot.bidId,
-    banner: mapBanner(slot),
-    tagid: slot.adUnitCode.toString(),
-  };
-}
-
-/**
- * Produces an OpenRTB Banner object for the slot given.
- */
-function mapBanner(slot) {
-  return {
-    w: slot.sizes[0][0],
-    h: slot.sizes[0][1],
-    format: mapSizes(slot.sizes)
-  };
-}
-
-/**
- * Produce openRTB banner.format object
- */
-function mapSizes(slotSizes) {
-  const format = [];
-  slotSizes.forEach(elem => {
-    format.push({
-      w: elem[0],
-      h: elem[1]
-    });
-  });
-  return format;
-}
-
-/**
- * Produces an OpenRTB site object.
- */
-function mapSite(validRequest) {
-  const pubId = validRequest && validRequest.length > 0 ? validRequest[0].params.publisherId : 'unknown';
-  return {
-    publisher: {
-      id: pubId.toString(),
-    },
-    page: utils.getTopWindowUrl(),
-    name: utils.getOrigin()
-  }
-}
-
 export const spec = {
   code: BIDDER_CODE,
   supportedMediaTypes: [BANNER],
@@ -87,7 +29,7 @@ export const spec = {
       const gdpr = bidderRequest.gdprConsent.gdprApplies ? 1 : 0;
       request.regs = {ext: {gdpr: gdpr}};
       request.user = {ext: {consent: consentStr}};
-    };
+    }
 
     return {
       method: 'POST',
@@ -96,30 +38,74 @@ export const spec = {
     };
   },
   interpretResponse: function (serverResponse, originalRequest) {
-    serverResponse = serverResponse.body;
+    const responseBody = serverResponse.body;
     const bids = [];
 
-    if (utils.isArray(serverResponse)) {
-      serverResponse.forEach(serverBid => {
-        if (serverBid.price !== 0) {
-          const bid = {
-            requestId: serverBid.impid,
-            mediaType: BANNER,
-            cpm: serverBid.price,
-            creativeId: serverBid.adid,
-            ad: serverBid.adm,
-            width: serverBid.w,
-            height: serverBid.h,
-            ttl: 55,
-            netRevenue: true,
-            currency: 'USD'
-          };
-          bids.push(bid);
+    if (utils.isArray(responseBody)) {
+      responseBody.forEach(serverBid => {
+        if (serverBid.price === 0) {
+          return;
         }
+        bids.push({
+          requestId: serverBid.impid,
+          mediaType: BANNER,
+          cpm: serverBid.price,
+          creativeId: serverBid.adid,
+          ad: serverBid.adm,
+          width: serverBid.w,
+          height: serverBid.h,
+          ttl: 55,
+          netRevenue: true,
+          currency: 'USD'
+        });
       });
     }
     return bids;
   }
 };
+
+function buildEndpointUrl(region) {
+  return 'https://' + region + '.' + ENDPOINT_URL;
+}
+
+/**
+ * Produces OpenRTB Imp object from a slot config
+ */
+function mapImpression(slot) {
+  return {
+    id: slot.bidId,
+    banner: mapBanner(slot),
+    tagid: slot.adUnitCode.toString()
+  };
+}
+
+/**
+ * Produces OpenRTB Banner object
+ */
+function mapBanner(slot) {
+  return {
+    w: slot.sizes[0][0],
+    h: slot.sizes[0][1],
+    format: slot.sizes.map(size => ({
+      w: size[0],
+      h: size[1]
+    }))
+  };
+}
+
+/**
+ * Produces an OpenRTB Site object
+ */
+function mapSite(validRequest) {
+  const pubId = validRequest && validRequest.length > 0
+    ? validRequest[0].params.publisherId : 'unknown';
+  return {
+    publisher: {
+      id: pubId.toString(),
+    },
+    page: utils.getTopWindowUrl(),
+    name: utils.getOrigin()
+  }
+}
 
 registerBidder(spec);
