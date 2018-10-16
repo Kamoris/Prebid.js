@@ -22,8 +22,7 @@ export const OPENRTB = {
       ICON: 3,
       BODY: 4,
       SPONSORED: 5,
-      CLICK_URL: 6,
-      CTA: 7
+      CTA: 6
     },
     DATA_ASSET_TYPE: {
       SPONSORED: 1,
@@ -309,9 +308,6 @@ function interpretNativeAd(adm) {
         break;
       case OPENRTB.NATIVE.ASSET_ID.SPONSORED:
         result.sponsoredBy = asset.data.value;
-        break;
-      case OPENRTB.NATIVE.ASSET_ID.CLICK_URL:
-        result.clickUrl = encodeURIComponent(asset.data.value);
         break;
       case OPENRTB.NATIVE.ASSET_ID.CTA:
         result.cta = asset.data.value;
