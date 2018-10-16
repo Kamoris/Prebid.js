@@ -72,6 +72,8 @@ export const spec = {
       if (serverBid.price === 0) {
         return;
       }
+      // it's ugly but I can't find a better way
+      // try...catch is risky cause JSON.parse throws SyntaxError
       if (serverBid.adm.startsWith('{"native')) {
         bids.push(interpretNativeBid(serverBid));
       } else {
@@ -81,13 +83,15 @@ export const spec = {
     return bids;
   }
 };
+registerBidder(spec);
 
 function buildEndpointUrl(region) {
   return 'https://' + region + '.' + ENDPOINT_URL;
 }
 
 /**
- * Produces OpenRTB Imp object from a slot config
+ * @param {object} slot Ad Unit Params by Prebid
+ * @returns {object} Imp by OpenRTB 2.5 §3.2.4
  */
 function mapImpression(slot) {
   return {
@@ -99,7 +103,8 @@ function mapImpression(slot) {
 }
 
 /**
- * Produces OpenRTB Banner object
+ * @param {object} slot Ad Unit Params by Prebid
+ * @returns {object} Banner by OpenRTB 2.5 §3.2.6
  */
 function mapBanner(slot) {
   if (slot.mediaType === 'banner' ||
@@ -117,11 +122,12 @@ function mapBanner(slot) {
 }
 
 /**
- * Produces an OpenRTB Site object
+ * @param {object} slot Ad Unit Params by Prebid
+ * @returns {object} Site by OpenRTB 2.5 §3.2.13
  */
-function mapSite(validRequest) {
-  const pubId = validRequest && validRequest.length > 0
-    ? validRequest[0].params.publisherId : 'unknown';
+function mapSite(slot) {
+  const pubId = slot && slot.length > 0
+    ? slot[0].params.publisherId : 'unknown';
   return {
     publisher: {
       id: pubId.toString(),
@@ -132,7 +138,8 @@ function mapSite(validRequest) {
 }
 
 /**
- * Produces an OpenRTB Native object from a slot config
+ * @param {object} slot Ad Unit Params by Prebid
+ * @returns {object} Request by OpenRTB Native Ads 1.1 §4
  */
 function mapNative(slot) {
   if (slot.mediaType === 'native' || utils.deepAccess(slot, 'mediaTypes.native')) {
@@ -146,7 +153,8 @@ function mapNative(slot) {
 }
 
 /**
- * Produces an OpenRTB Native Ads Assets objects
+ * @param {object} slot Slot config by Prebid
+ * @returns {array} Request Assets by OpenRTB Native Ads 1.1 §4.2
  */
 function mapNativeAssets(slot) {
   const params = slot.nativeParams || utils.deepAccess(slot, 'mediaTypes.native');
@@ -208,7 +216,9 @@ function mapNativeAssets(slot) {
 }
 
 /**
- * Produces an OpenRTB Native Ads Image object
+ * @param {object} image Prebid native.image/icon
+ * @param {int} type Image or icon code
+ * @returns {object} Request Image by OpenRTB Native Ads 1.1 §4.4
  */
 function mapNativeImage(image, type) {
   const img = {type: type};
@@ -227,7 +237,8 @@ function mapNativeImage(image, type) {
 }
 
 /**
- * Produces Prebid bidObject from OpenRTB Bid object
+ * @param {object} serverBid Bid by OpenRTB 2.5 §4.2.3
+ * @returns {object} Prebid banner bidObject
  */
 function interpretBannerBid(serverBid) {
   return {
@@ -245,7 +256,8 @@ function interpretBannerBid(serverBid) {
 }
 
 /**
- * Produces Prebid bidObject from OpenRTB Bid object
+ * @param {object} serverBid Bid by OpenRTB 2.5 §4.2.3
+ * @returns {object} Prebid native bidObject
  */
 function interpretNativeBid(serverBid) {
   return {
@@ -263,7 +275,8 @@ function interpretNativeBid(serverBid) {
 }
 
 /**
- * Produces Prebid bidObject.native from OpenRTB Native Ad Markup
+ * @param {string} adm JSON-encoded Request by OpenRTB Native Ads 1.1 §4.1
+ * @returns {object} Prebid bidObject.native
  */
 function interpretNativeAd(adm) {
   const native = JSON.parse(adm).native;
@@ -306,5 +319,3 @@ function interpretNativeAd(adm) {
   });
   return result;
 }
-
-registerBidder(spec);
