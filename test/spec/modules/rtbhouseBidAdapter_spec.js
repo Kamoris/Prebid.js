@@ -295,12 +295,11 @@ describe('RTBHouseAdapter', () => {
               icon: {},
               sponsoredBy: {},
               body: {},
-              clickUrl: {},
               cta: {},
             }
           }
         }));
-        expect(imp.native.request.assets.length).to.equal(7);
+        expect(imp.native.request.assets.length).to.equal(6);
         imp.native.request.assets.forEach(asset => {
           expect(asset.id).to.be.at.least(1)
         })

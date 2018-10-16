@@ -28,7 +28,6 @@ export const OPENRTB = {
       SPONSORED: 1,
       DESC: 2,
       CTA_TEXT: 12,
-      CLICK_URL: 501,
     },
   }
 };
@@ -180,7 +179,8 @@ function mapNativeAssets(slot) {
       id: OPENRTB.NATIVE.ASSET_ID.SPONSORED,
       required: params.sponsoredBy.required ? 1 : 0,
       data: {
-        type: OPENRTB.NATIVE.DATA_ASSET_TYPE.SPONSORED
+        type: OPENRTB.NATIVE.DATA_ASSET_TYPE.SPONSORED,
+        len: params.sponsoredBy.len
       }
     })
   }
@@ -190,16 +190,7 @@ function mapNativeAssets(slot) {
       required: params.body.request ? 1 : 0,
       data: {
         type: OPENRTB.NATIVE.DATA_ASSET_TYPE.DESC,
-        len: params.body.len || undefined
-      }
-    })
-  }
-  if (params.clickUrl) {
-    assets.push({
-      id: OPENRTB.NATIVE.ASSET_ID.CLICK_URL,
-      required: params.clickUrl.required ? 1 : 0,
-      data: {
-        type: OPENRTB.NATIVE.DATA_ASSET_TYPE.CLICK_URL
+        len: params.body.len
       }
     })
   }
@@ -209,7 +200,7 @@ function mapNativeAssets(slot) {
       required: params.cta.required ? 1 : 0,
       data: {
         type: OPENRTB.NATIVE.DATA_ASSET_TYPE.CTA_TEXT,
-        len: params.cta.len || undefined
+        len: params.cta.len
       }
     })
   }
