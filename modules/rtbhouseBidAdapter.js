@@ -7,6 +7,7 @@ const BIDDER_CODE = 'rtbhouse';
 const REGIONS = ['prebid-eu', 'prebid-us', 'prebid-asia'];
 const ENDPOINT_URL = 'creativecdn.com/bidder/prebid/bids';
 const DEFAULT_CURRENCY_ARR = ['USD']; // NOTE - USD is the only supported currency right now; Hardcoded for bids
+const TTL = 55;
 
 // Codes defined by OpenRTB Native Ads 1.1 specification
 export const OPENRTB = {
@@ -72,8 +73,7 @@ export const spec = {
       if (serverBid.price === 0) {
         return;
       }
-      // it's ugly but I can't find a better way
-      // try...catch is risky cause JSON.parse throws SyntaxError
+      // try...catch would be risky cause JSON.parse throws SyntaxError
       if (serverBid.adm.startsWith('{"native')) {
         bids.push(interpretNativeBid(serverBid));
       } else {
@@ -127,7 +127,8 @@ function mapBanner(slot) {
  */
 function mapSite(slot) {
   const pubId = slot && slot.length > 0
-    ? slot[0].params.publisherId : 'unknown';
+    ? slot[0].params.publisherId
+    : 'unknown';
   return {
     publisher: {
       id: pubId.toString(),
@@ -164,7 +165,7 @@ function mapNativeAssets(slot) {
       id: OPENRTB.NATIVE.ASSET_ID.TITLE,
       required: params.title.required ? 1 : 0,
       title: {
-        len: params.title.len || 140
+        len: params.title.len || 25
       }
     })
   }
@@ -249,7 +250,7 @@ function interpretBannerBid(serverBid) {
     ad: serverBid.adm,
     width: serverBid.w,
     height: serverBid.h,
-    ttl: 55,
+    ttl: TTL,
     netRevenue: true,
     currency: 'USD'
   }
@@ -267,7 +268,7 @@ function interpretNativeBid(serverBid) {
     creativeId: serverBid.adid,
     width: 1,
     height: 1,
-    ttl: 55,
+    ttl: TTL,
     netRevenue: true,
     currency: 'USD',
     native: interpretNativeAd(serverBid.adm),
